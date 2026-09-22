@@ -160,7 +160,7 @@ void StreamServerComponent::flush() {
         iov[1].iov_len = this->buf_head_ - (client.position + iov[0].iov_len);
         if ((written = client.socket->writev(iov, 2)) > 0) {
             client.position += written;
-        } else if (written == 0 || errno == ECONNRESET) {
+        } else if (written == 0 || errno == ECONNRESET || errno == ENOTCONN || errno == EPIPE) {
             ESP_LOGD(TAG, "Client %s disconnected", client.identifier.c_str());
             client.disconnected = true;
             continue;  // don't consider this client when calculating the tail position
@@ -184,7 +184,7 @@ void StreamServerComponent::write() {
         while ((read = client.socket->read(&buf, sizeof(buf))) > 0)
             this->stream_->write_array(buf, read);
 
-        if (read == 0 || errno == ECONNRESET) {
+        if (read == 0 || errno == ECONNRESET || errno == ENOTCONN || errno == EPIPE) {
             ESP_LOGD(TAG, "Client %s disconnected", client.identifier.c_str());
             client.disconnected = true;
         } else if (errno == EWOULDBLOCK || errno == EAGAIN) {
