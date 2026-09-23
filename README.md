@@ -26,6 +26,12 @@ Compared with the upstream repository, this fork currently includes the followin
 - Added handling for `ENOTCONN` and `EPIPE` socket errors in addition to the existing connection reset handling.
 - Affected clients are marked as disconnected and removed through the existing cleanup logic.
 
+### Fix TCP latency caused by empty iovec
+
+- Avoid passing an empty second `iovec` to `writev()` when the ring buffer does not wrap.
+- Pass the actual number of populated `iovec` entries while preserving two-part writes when the ring buffer wraps.
+- This fixes severe latency observed with request/response protocols such as XMODEM, particularly when using Windows clients.
+
 ## Usage
 
 Configuration and usage are unchanged from the upstream project.
