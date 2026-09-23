@@ -1,82 +1,66 @@
-Stream server for ESPHome
-=========================
+# ESPHome Stream Server
 
-Custom component for ESPHome to expose a UART stream over WiFi or Ethernet. Provides a serial-to-wifi bridge as known
-from ESPLink or ser2net, using ESPHome.
+A maintained fork of [oxan/esphome-stream-server](https://github.com/oxan/esphome-stream-server), a custom ESPHome component that exposes a UART stream over Wi-Fi or Ethernet.
 
-This component creates a TCP server listening on port 6638 (by default), and relays all data between the connected
-clients and the serial port. It doesn't support any control sequences, telnet options or RFC 2217, just raw data.
+## About this fork
 
-Usage
------
+The original `esphome-stream-server` project has been useful to us, but the upstream repository has not been actively maintained while newer ESPHome releases have introduced compatibility changes.
 
-Requires ESPHome v2022.3.0 or newer.
+We use this component in our official ESPHome-based builds, so we created this fork to keep it compatible with newer ESPHome versions and to address issues encountered in our own use.
+
+This repository is publicly available, and anyone is welcome to use it in their own ESPHome projects.
+
+## Changes in this fork
+
+Compared with the upstream repository, this fork currently includes the following fixes:
+
+### ESPHome compatibility
+
+- Replaced version-specific handling of `uart.request_wake_loop_on_rx()` with feature detection.
+- Updated network address handling for the breaking change to `get_use_address()` introduced in ESPHome 2026.7.
+- Added support for the newer `network::get_use_address_to()` API where required.
+
+### TCP client cleanup
+
+- Improved handling of stale and half-open TCP clients.
+- Added handling for `ENOTCONN` and `EPIPE` socket errors in addition to the existing connection reset handling.
+- Affected clients are marked as disconnected and removed through the existing cleanup logic.
+
+## Usage
+
+Configuration and usage are unchanged from the upstream project.
+
+Please refer to the upstream documentation for usage examples, sensors, multiple stream servers, buffer configuration, and other options:
+
+[Upstream README: oxan/esphome-stream-server](https://github.com/oxan/esphome-stream-server#readme)
+
+When using this fork, make sure your `external_components` source points to this repository instead of the upstream repository.
+
+For example:
 
 ```yaml
 external_components:
-  - source: github://oxan/esphome-stream-server
+  - source: github://SONOFF-Technologies/esphome-stream-server
 
 stream_server:
 ```
 
-You can set the UART ID and port to be used under the `stream_server` component.
+## Upstream project
 
-```yaml
-uart:
-   id: uart_bus
-   # add further configuration for the UART here
+This project is based on [oxan/esphome-stream-server](https://github.com/oxan/esphome-stream-server).
 
-stream_server:
-   uart_id: uart_bus
-   port: 1234
-```
+We sincerely thank **Oxan van Leeuwen** and the contributors to the original project for their work. The original project provides the foundation for this maintained fork.
 
-Sensors
--------
-The server provides a binary sensor that signals whether there currently is a client connected:
+For issues specifically related to this fork or compatibility with newer ESPHome versions, please report them in this repository.
 
-```yaml
-binary_sensor:
-  - platform: stream_server
-    connected:
-      name: Connected
-```
+## Contributions
 
-It also provides a numeric sensor that indicates the number of connected clients:
+This repository is primarily maintained for our own ESPHome-based products, but it is also available for community use.
 
-```yaml
-sensor:
-  - platform: stream_server
-    connection_count:
-      name: Number of connections
-```
+Bug reports, compatibility fixes, and pull requests are welcome.
 
-Advanced
---------
-It is possible to define multiple stream servers for multiple UARTs simultaneously:
+## License
 
-```yaml
-uart:
-  - id: uart1
-    # ...
-  - id: uart2
-    # ...
+This project retains the license and copyright notices of the upstream project.
 
-stream_server:
-  - uart_id: uart1
-    port: 1234
-  - uart_id: uart2
-    port: 1235
-```
-
-The stream server has an internal buffer into which UART data is read before it is transmitted over TCP. The size of
-this buffer can be changed using the `buffer_size` option, and must be a power of two. Increasing the buffer size above
-the default of 128 bytes can help to achieve optimal throughput, and is especially helpful when using high baudrates. It
-can also be necessary to increase the [`rx_buffer_size`][uart-config] option of the UART itself.
-
-```yaml
-stream_server:
-    buffer_size: 2048
-```
-
-[uart-config]: https://esphome.io/components/uart.html#configuration-variables
+See [LICENSE.txt](LICENSE.txt) for the complete license terms.
